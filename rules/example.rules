@@ -52,8 +52,7 @@
 -a always,exit -F arch=b32 -S finit_module -S init_module -S delete_module -F auid!=-1 -k modules
 
 ## Time
--a always,exit -F arch=b32 -F uid!=ntp -S adjtimex -S settimeofday -S clock_settime -k time
--a always,exit -F arch=b64 -F uid!=ntp -S adjtimex -S settimeofday -S clock_settime -k time
+
 ### Local time zone
 -w /etc/localtime -p wa -k localtime
 
@@ -88,17 +87,18 @@
 -w /var/log/tallylog -p wa -k login
 
 ## Network Environment
+#增加过滤
 ### Changes to hostname
--a always,exit -F arch=b32 -S sethostname -S setdomainname -k network_modifications
--a always,exit -F arch=b64 -S sethostname -S setdomainname -k network_modifications
+#-a always,exit -F arch=b32 -S sethostname -S setdomainname -k network_modifications
+#-a always,exit -F arch=b64 -S sethostname -S setdomainname -k network_modifications
 
 ### Successful IPv4 Connections
--a always,exit -F arch=b64 -S connect -F a2=16 -F success=1 -F key=network_connect_4
--a always,exit -F arch=b32 -S connect -F a2=16 -F success=1 -F key=network_connect_4
+#-a always,exit -F arch=b64 -S connect -F a2=16 -F success=1 -F key=network_connect_4
+#-a always,exit -F arch=b32 -S connect -F a2=16 -F success=1 -F key=network_connect_4
 
 ### Successful IPv6 Connections
--a always,exit -F arch=b64 -S connect -F a2=28 -F success=1 -F key=network_connect_6
--a always,exit -F arch=b32 -S connect -F a2=28 -F success=1 -F key=network_connect_6
+#-a always,exit -F arch=b64 -S connect -F a2=28 -F success=1 -F key=network_connect_6
+#-a always,exit -F arch=b32 -S connect -F a2=28 -F success=1 -F key=network_connect_6
 
 ### 增加bind，listen作为服务器被链接？？
 
@@ -231,10 +231,11 @@
 -a always,exit -F dir=/home -F uid=0 -F auid>=1000 -F auid!=-1 -C auid!=obj_uid -k power_abuse
 
 ## Socket Creations
+# 增加过滤
 ### will catch both IPv4 and IPv6
 
--a always,exit -F arch=b32 -S socket -F a0=2  -k T1011_Exfiltration_Over_Other_Network_Medium
--a always,exit -F arch=b64 -S socket -F a0=2  -k T1011_Exfiltration_Over_Other_Network_Medium
+#-a always,exit -F arch=b32 -S socket -F a0=2  -k T1011_Exfiltration_Over_Other_Network_Medium
+#-a always,exit -F arch=b64 -S socket -F a0=2  -k T1011_Exfiltration_Over_Other_Network_Medium
 
--a always,exit -F arch=b32 -S socket -F a0=10 -k T1011_Exfiltration_Over_Other_Network_Medium
--a always,exit -F arch=b64 -S socket -F a0=10 -k T1011_Exfiltration_Over_Other_Network_Medium
+#-a always,exit -F arch=b32 -S socket -F a0=10 -k T1011_Exfiltration_Over_Other_Network_Medium
+#-a always,exit -F arch=b64 -S socket -F a0=10 -k T1011_Exfiltration_Over_Other_Network_Medium

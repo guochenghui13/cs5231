@@ -12,7 +12,7 @@ class LogItem:
 def parse(filename):
     f = open(filename)
     # save filtered logs to another ndjson file for reference.
-    output= open(filename.split('.')[0]+"_filtered.ndjson", "w")
+    output= open(".."+filename.split('.')[2]+"_filtered.ndjson", "w")
     
     fd_map = {"0": "STDIN_FILENO", "1": "STDOUT_FILENO", "2": "STDERR_FILENO"}
     fd_count = {}
@@ -87,4 +87,4 @@ def parse(filename):
     output.close()
     f.close()
 
-parse("../auditbeat-20221125.ndjson")
+parse("../logs/auditbeat-20221125.ndjson")

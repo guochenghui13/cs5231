@@ -3,13 +3,6 @@
 
 import re
 
-class LogItem:
-  def __init__(self, tag, category, description = "", log = "") -> None:
-    self.tag = tag
-    self.category = category
-    self.description = description
-    self.log = log
-
 class RuleType:
   def __init__(self, category, description = "", tag = "") -> None:
     self.category = category

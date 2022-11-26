@@ -1,12 +1,13 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[35]:
-
-
 import json
 import collections
 import sys
+
+from parse_rules import RuleType
+
+class LogItem:
+  def __init__(self, rule_type, log = "") -> None:
+    self.rule_type = rule_type
+    self.log = log
 
 def parse(filename):
     f = open(filename)
@@ -28,32 +29,35 @@ def parse(filename):
         try:
             timestamp = data['@timestamp']
             seq = int(data['auditd']['sequence'])
-            syscall = data['auditd']['data']['syscall']    
+            tag = data['tags'][0]
         except KeyError as e:
             continue
+        
+        syscall = ''
+        if tag == 'student_syscall':
+            try:
+                syscall = data['auditd']['data']['syscall']
+                process_name = data['process']['name']
+                process_executable = data['process']['executable']
+            except KeyError as e:
+                continue
             
-        try:
-            process_name = data['process']['name']
-            process_executable = data['process']['executable']
-        except KeyError as e:
-            continue
+            if syscall == 'read' or syscall == 'write' or syscall == 'writev':
+                try:
+                    a0 = data['auditd']['data']['a0']
+                    accessed_file = fd_map.get(a0, "unknown")
+                except KeyError as e:
+                    continue
+            elif syscall == 'open' or syscall == 'openat':
+                try:
+                    file_path = data['file']['path']
+                    exit = data['auditd']['data']['exit']
+                except KeyError as e:
+                    continue
+            
+                fd_map[exit] = file_path
+                accessed_file = file_path
         
-        if syscall == 'read' or syscall == 'write' or syscall == 'writev':
-            try:
-                a0 = data['auditd']['data']['a0']
-                accessed_file = fd_map.get(a0, "unknown")
-            except KeyError as e:
-                continue
-        elif syscall == 'open' or syscall == 'openat':
-            try:
-                file_path = data['file']['path']
-                exit = data['auditd']['data']['exit']
-            except KeyError as e:
-                continue
-        
-            fd_map[exit] = file_path
-            accessed_file = file_path
-     
 
         if(accessed_file.startswith("/home/student/secret/")
            or "program" in process_executable):
@@ -83,17 +87,4 @@ def parse(filename):
     output.close()
     f.close()
 
-parse("auditbeat-20221125.ndjson")
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
+parse("../auditbeat-20221125.ndjson")

@@ -8,7 +8,7 @@ class RuleType:
     self.category = category
     self.description = description
     self.tag = tag
-    self. rule = rule
+    self.rule = rule
   
   def __str__(self) -> str:
     str = ""
@@ -45,8 +45,6 @@ class CatchRules:
       rules_str += cate + ':\n'
       for rule in rules:
         rules_str += rule.__str__()
-        # rules_str += '\tdescription: '+rule.description+'\n'
-        # rules_str += '\ttag: '+rule.tag+'\n'
     return rules_str
 
 def parse_rules(rule_file, log_types):
@@ -67,7 +65,7 @@ def parse_rules(rule_file, log_types):
         despt = " ".join(line.split()[1:])
       elif (tag):
         tag = tag[0]
-        rule = RuleType(cate, tag, despt)
+        rule = RuleType(cate, tag, despt, line)
         log_types.add_rule(rule)
 
 def main():

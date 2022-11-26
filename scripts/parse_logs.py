@@ -2,12 +2,18 @@ import json
 import collections
 import sys
 
-from parse_rules import RuleType
+from parse_rules import *
 
 class LogItem:
-  def __init__(self, rule_type, log = "") -> None:
+  def __init__(self, rule_type = None, log = []) -> None:
     self.rule_type = rule_type
     self.log = log
+  
+  def add_log(self, log):
+    self.log = log
+
+  def __str__(self) -> str:
+    return "rule_type: " + self.rule_type.__str__() + '\n' + 'log: ' + self.log.__str__()
 
 def parse(filename):
     f = open(filename)
@@ -34,6 +40,8 @@ def parse(filename):
             continue
         
         syscall = ''
+        # use tag to find matching rule type
+        rule_type = CatchRules().search_rule(tag)
         if tag == 'student_syscall':
             try:
                 syscall = data['auditd']['data']['syscall']
@@ -54,15 +62,16 @@ def parse(filename):
                     exit = data['auditd']['data']['exit']
                 except KeyError as e:
                     continue
-            
                 fd_map[exit] = file_path
                 accessed_file = file_path
+            elif syscall == 'execv':
+                continue
         
 
         if(accessed_file.startswith("/home/student/secret/")
            or "program" in process_executable):
             output.write(log)
-            events[seq] = (timestamp, syscall, process_executable, accessed_file)
+            events[seq] = LogItem(rule_type = rule_type, log=(timestamp, syscall, process_executable, accessed_file))
             if process_executable in program_activities:
                 program_activities[process_executable].append([seq, timestamp, syscall, accessed_file])
             else:

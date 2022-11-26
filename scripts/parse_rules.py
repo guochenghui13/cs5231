@@ -3,28 +3,19 @@
 
 import re
 
-class LogItem:
-  def __init__(self, rule_type = None, log = []) -> None:
-    self.ruletype = rule_type
-    self.log = log
-  
-  def addLog(self, log):
-    self.log = log
-
-  def __str__(self) -> str:
-    return self.ruletype.__str__() + '\n' + 'log: ' + self.log.__str__()
-
 class RuleType:
-  def __init__(self, category, tag = "", description = "") -> None:
+  def __init__(self, category, tag = "", description = "", rule = "") -> None:
     self.category = category
     self.description = description
     self.tag = tag
+    self. rule = rule
   
   def __str__(self) -> str:
     str = ""
     str += "category: " + self.category + "\n"
     str += "description: " + self.description + "\n"
     str += "tag: " + self.tag + "\n"
+    str += "rule: " + self.rule + "\n"
     return str
 
 class CatchRules:

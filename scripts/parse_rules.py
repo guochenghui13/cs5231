@@ -4,19 +4,21 @@
 import re
 
 class RuleType:
-  def __init__(self, category, tag = "", description = "", rule = "") -> None:
+  def __init__(self, category, tag = "", description = "", rule = "", type = "syscall") -> None:
     self.category = category
     self.description = description
     self.tag = tag
     self.rule = rule
+    self.type = type
   
   def __str__(self) -> str:
     str = " | "
     cate = "Category: " + self.category
     desp = "Description: " + self.description
     tag = "Tag: " + self.tag
+    type = "Type: " + self.type
     rule = "Rule: " + self.rule
-    return str.join([cate, desp, tag])
+    return str.join([cate, desp, tag, type])
 
 class CatchRules:
   # create a CatchRules object containing a map with
@@ -63,7 +65,12 @@ class CatchRules:
           despt = " ".join(line.split()[1:])
         elif (tag):
           tag = tag[0]
-          rule = RuleType(cate, tag, despt, line)
+          find_w = re.search("-w\s", line)
+          if find_w:
+            type = "file"
+          else:
+            type = "syscall"
+          rule = RuleType(cate, tag, despt, line, type)
           self.add_rule(rule)
 
   def __str__(self) -> str:
@@ -80,7 +87,7 @@ def main():
   return log_types
 
 def test(log_types):
-  rule_type = CatchRules().search_rule("sys_exe")
+  rule_type = CatchRules().search_rule("sbin_susp")
   for rule in rule_type:
     print(rule)
 

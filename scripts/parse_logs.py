@@ -71,6 +71,7 @@ def parse(filename, print_style = ""):
                     output.write(log)
                     log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "pid="+str(pid), "accessed_file="+accessed_file)
                     events[seq] = LogItem(rule_type = rule_type, log=log_content)
+            
             if tag == 'sys_exe':
                 try:
                     syscall = data['auditd']['data']['syscall']
@@ -100,8 +101,11 @@ def parse(filename, print_style = ""):
                     try:
                         paths = data['auditd']['paths']
                         file_path = data['file']['path']
+                        exit = data['auditd']['data']['exit']
                     except KeyError as e:
                         continue
+
+                    fd_map[exit] = file_path
 
                     if len(paths) > 1:
                         name_type = paths[1]['nametype']
@@ -121,10 +125,17 @@ def parse(filename, print_style = ""):
                     output.write(log)
                     log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "pid="+str(pid), "destination="+dest, "socket="+str(socket), "result="+result)
                     events[seq] = LogItem(rule_type = rule_type, log=log_content)
-            
-        elif rule_type.type == "file":
-            # parse -w logs here ...
-            continue
+        else:
+            try:
+                syscall = data['auditd']['data']['syscall']
+                process_name = data['process']['name']
+                process_executable = data['process']['executable']
+                pid = data['process']['pid']
+            except KeyError as e:
+                continue
+            log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "pid="+str(pid))
+            events[seq] = LogItem(rule_type = rule_type, log=log_content)
+        
 
     od = collections.OrderedDict(sorted(events.items()))
     
@@ -148,14 +159,14 @@ def group_by_program(od):
     for idx, e in enumerate(od):
         process_executable = od[e].log[2].split('=')[1]
         if process_executable in program_activities:
-            program_activities[process_executable].append([e, od[e].log])
+            program_activities[process_executable].append([e, od[e]])
         else:
-            program_activities[process_executable]= [[e, od[e].log]]
+            program_activities[process_executable]= [[e, od[e]]]
     
     for key, values in program_activities.items():
         print(key, ':')
         for i in values:
-            print('\t', "sequence=", i[0], "log=", i[1])
+            print('\t', "sequence=", i[0], i[1])
     return program_activities
 
 def group_by_pid(od):
@@ -174,4 +185,4 @@ def group_by_pid(od):
     return pid_dict
 
 
-parse("../logs/auditbeat-20221127.ndjson", "pid")
+parse("../logs/auditbeat-20221127.ndjson", "program")

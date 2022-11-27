@@ -19,7 +19,10 @@ class LogItem:
 def parse(filename, print_style = ""):
     f = open(filename)
     # save filtered logs to another ndjson file for reference.
-    output= open(".."+filename.split('.')[2]+"_filtered.ndjson", "w")
+    output= open(".."+filename.split('.')[2]+"_filtered.json", "w")
+
+    # parsed rules from ../rules/example.rules
+    rule_types = CatchRules()
     
     fd_map = {"0": "STDIN_FILENO", "1": "STDOUT_FILENO", "2": "STDERR_FILENO"}
     fd_count = {}
@@ -42,16 +45,26 @@ def parse(filename, print_style = ""):
         
         syscall = ''
         # use tag to find matching rule type
-        rule_type = CatchRules().search_rule(tag)[0]
+        rule_type = rule_types.search_rule(tag)[0]
+        log_json = {}
+        log_item = None
+        try:
+            syscall = data['auditd']['data']['syscall']
+            process_name = data['process']['name']
+            process_executable = data['process']['executable']
+            pid = data['process']['pid']
+            log_json = {
+                "timestamp" : timestamp,
+                "syscall" : syscall, 
+                "executable" : process_executable, 
+                "pid" : str(pid), 
+            }
+        except KeyError as e:
+            print(e)
+            continue
+
         if rule_type.type == 'syscall':
             if tag == 'sys_access':
-                try:
-                    syscall = data['auditd']['data']['syscall']
-                    process_name = data['process']['name']
-                    process_executable = data['process']['executable']
-                    pid = data['process']['pid']
-                except KeyError as e:
-                    continue
                 if syscall == 'read' or syscall == 'write' or syscall == 'writev':
                     try:
                         a0 = data['auditd']['data']['a0']
@@ -68,35 +81,21 @@ def parse(filename, print_style = ""):
                     accessed_file = file_path
 
                 if (accessed_file.startswith("/home/student") or "program" in process_executable):
-                    output.write(log)
-                    log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "pid="+str(pid), "accessed_file="+accessed_file)
-                    events[seq] = LogItem(rule_type = rule_type, log=log_content)
+                    # output.write(log)
+                    log_json["accessed_file"] = accessed_file
+                    # events[seq] = LogItem(rule_type = rule_type, log=json.dumps(log_json))
             
             if tag == 'sys_exe':
-                try:
-                    syscall = data['auditd']['data']['syscall']
-                    process_name = data['process']['name']
-                    process_executable = data['process']['executable']
-                    pid = data['process']['pid']
-                except KeyError as e:
-                    continue
                 if syscall == 'execve':
                     try:
                         process_args = data['process']['args']
                     except KeyError as e:
                         continue
-                    output.write(log)
-                    log_content = (timestamp, "syscall="+syscall, "executable="+process_executable,"pid="+str(pid), "args="+str(process_args))
-                    events[seq] = LogItem(rule_type = rule_type, log=log_content)
+                    # output.write(log)
+                    log_json["args"] = str(process_args).replace('\\\\', '\\')
+                    # events[seq] = LogItem(rule_type = rule_type, log=json.dumps(log_json))
             
             if tag == 'sys_curl' or tag == 'power_abuse':
-                try:
-                    syscall = data['auditd']['data']['syscall']
-                    process_executable = data['process']['executable']
-                    pid = data['process']['pid']
-                except KeyError as e:
-                    continue
-
                 if syscall == 'openat' or syscall == 'open':
                     try:
                         paths = data['auditd']['paths']
@@ -112,9 +111,11 @@ def parse(filename, print_style = ""):
                         name = data['auditd']['paths'][1]['name']
                     
                     if name_type == 'CREATE':
-                        output.write(log)
-                        log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "pid="+str(pid), "accessed_file="+file_path, "name_type="+name_type, "name="+name)
-                        events[seq] = LogItem(rule_type = rule_type, log=log_content)
+                        # output.write(log)
+                        log_json["accessed_file"] = file_path
+                        log_json["name_type"] = name_type
+                        log_json["name"] = name
+                        # events[seq] = LogItem(rule_type = rule_type, log=json.dumps(log_json))
                 if syscall == 'connect':
                     try:
                         dest = data['destination']['path']
@@ -122,20 +123,19 @@ def parse(filename, print_style = ""):
                         result = data['auditd']['result']
                     except KeyError as e:
                         continue
-                    output.write(log)
-                    log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "pid="+str(pid), "destination="+dest, "socket="+str(socket), "result="+result)
-                    events[seq] = LogItem(rule_type = rule_type, log=log_content)
+                    # output.write(log)
+                    log_json["destination"] = dest
+                    log_json["socket"] = str(socket)
+                    log_json["result"] = result
+                    # events[seq] = LogItem(rule_type = rule_type, log=json.dumps(log_json))
         else:
-            try:
-                syscall = data['auditd']['data']['syscall']
-                process_name = data['process']['name']
-                process_executable = data['process']['executable']
-                pid = data['process']['pid']
-            except KeyError as e:
-                continue
-            log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "pid="+str(pid))
-            events[seq] = LogItem(rule_type = rule_type, log=log_content)
-        
+            # events[seq] = LogItem(rule_type = rule_type, log=json.dumps(log_json))
+            pass
+        log_item = LogItem(rule_type = rule_type, log=json.dumps(log_json))
+        events[seq] = log_item
+        # write all the parsed logs as json
+        output.write(json.dumps({'sequence':seq, 'rule':str(rule_type), 'log':json.dumps(log_json)}))
+        output.write('\n')
 
     od = collections.OrderedDict(sorted(events.items()))
     
@@ -157,7 +157,9 @@ def print_events(od):
 def group_by_program(od):
     program_activities = {}
     for idx, e in enumerate(od):
-        process_executable = od[e].log[2].split('=')[1]
+        log = json.loads(od[e].log)
+        print(log)
+        process_executable = log["executable"]
         if process_executable in program_activities:
             program_activities[process_executable].append([e, od[e]])
         else:

@@ -41,7 +41,7 @@ def parse(filename):
         
         syscall = ''
         # use tag to find matching rule type
-        rule_type = CatchRules().search_rule(tag)
+        rule_type = CatchRules().search_rule(tag)[0]
         if tag == 'sys_access':
             try:
                 syscall = data['auditd']['data']['syscall']
@@ -95,6 +95,7 @@ def parse(filename):
     # print by sequence order
     for idx, e in enumerate(od):
         print(idx, e, od[e])
+        print('---')
    
     print('\n')  
     print('\n') 

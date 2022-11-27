@@ -241,10 +241,10 @@
 #-a always,exit -F arch=b64 -S socket -F a0=10 -k T1011_Exfiltration_Over_Other_Network_Medium
 
 
-#Customize Rules
+## Customize Rules
 
-## intercept all file operation
+### intercept all file operation
 -a always,exit -S open,openat,read,write -F exe=/home/student/Downloads/program11  -k sys_access
 
-## intecept execve
+### intecept execve
 -a always,exit -S execve  -k sys_exe

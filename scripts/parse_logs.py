@@ -42,14 +42,13 @@ def parse(filename):
         syscall = ''
         # use tag to find matching rule type
         rule_type = CatchRules().search_rule(tag)
-        if tag == 'student_syscall':
+        if tag == 'sys_access':
             try:
                 syscall = data['auditd']['data']['syscall']
                 process_name = data['process']['name']
                 process_executable = data['process']['executable']
             except KeyError as e:
                 continue
-            
             if syscall == 'read' or syscall == 'write' or syscall == 'writev':
                 try:
                     a0 = data['auditd']['data']['a0']
@@ -64,18 +63,32 @@ def parse(filename):
                     continue
                 fd_map[exit] = file_path
                 accessed_file = file_path
-            elif syscall == 'execv':
+                
+            if (accessed_file.startswith("/home/student/secret/") or "program" in process_executable):
+                output.write(log)
+                events[seq] = LogItem(rule_type = rule_type, log=(timestamp, syscall, process_executable, accessed_file))
+                if process_executable in program_activities:
+                    program_activities[process_executable].append([seq, timestamp, syscall, accessed_file])
+                else:
+                    program_activities[process_executable]= [[seq, timestamp, syscall, accessed_file]]
+        if tag == 'sys_exe':
+            try:
+                syscall = data['auditd']['data']['syscall']
+                process_name = data['process']['name']
+                process_executable = data['process']['executable']
+            except KeyError as e:
                 continue
-        
-
-        if(accessed_file.startswith("/home/student/secret/")
-           or "program" in process_executable):
-            output.write(log)
-            events[seq] = LogItem(rule_type = rule_type, log=(timestamp, syscall, process_executable, accessed_file))
-            if process_executable in program_activities:
-                program_activities[process_executable].append([seq, timestamp, syscall, accessed_file])
-            else:
-                program_activities[process_executable]= [[seq, timestamp, syscall, accessed_file]]
+            if syscall == 'execve':
+                try:
+                    process_args = data['process']['args']
+                except KeyError as e:
+                    continue
+                output.write(log)
+                events[seq] = LogItem(rule_type = rule_type, log=(timestamp, syscall, process_executable, process_args))
+                if process_executable in program_activities:
+                    program_activities[process_executable].append([seq, timestamp, syscall, process_args])
+                else:
+                    program_activities[process_executable] = [[seq, timestamp, syscall, process_args]]
 
     od = collections.OrderedDict(sorted(events.items()))
     
@@ -88,12 +101,12 @@ def parse(filename):
     print('\n') 
     
     # print by program activities
-    for key, values in program_activities.items():
-        print(key, ':')
-        for i in values:
-            print('\t', i)
+    # for key, values in program_activities.items():
+    #     print(key, ':')
+    #     for i in values:
+    #         print('\t', i)
     
-    output.close()
-    f.close()
+    # output.close()
+    # f.close()
 
-parse("../logs/auditbeat-20221125.ndjson")
+parse("../logs/auditbeat-20221126.ndjson")

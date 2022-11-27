@@ -19,8 +19,9 @@ class RuleType:
     return str
 
 class CatchRules:
-  def __init__(self) -> None:
+  def __init__(self, rule_file = "../rules/example.rules") -> None:
     self.rules = {}
+    self.parse_rules(rule_file)
 
   def add_rule(self, rule_type):
     cate = rule_type.category
@@ -39,6 +40,27 @@ class CatchRules:
       print("no such tag!", tagname)
     return tag_rules
 
+  def parse_rules(self, rule_file):
+    with open(rule_file,'r', encoding='utf-8') as f:
+      cate = ""
+      despt = ""
+      while(True):
+        line = f.readline()
+        if (not line):
+          break
+        level2_res = re.search("\A##\s", line)
+        level3_res = re.search("\A###\s", line)
+        tag = re.findall("-k\s(\w*)", line)
+        if (level2_res):
+          cate = " ".join(line.split()[1:])
+          despt = ""
+        elif (level3_res):
+          despt = " ".join(line.split()[1:])
+        elif (tag):
+          tag = tag[0]
+          rule = RuleType(cate, tag, despt, line)
+          self.add_rule(rule)
+
   def __str__(self) -> str:
     rules_str = ""
     for cate, rules in self.rules.items():
@@ -46,36 +68,14 @@ class CatchRules:
       for rule in rules:
         rules_str += rule.__str__()
     return rules_str
-
-def parse_rules(rule_file, log_types):
-  with open(rule_file,'r', encoding='utf-8') as f:
-    cate = ""
-    despt = ""
-    while(True):
-      line = f.readline()
-      if (not line):
-        break
-      level2_res = re.search("\A##\s", line)
-      level3_res = re.search("\A###\s", line)
-      tag = re.findall("-k\s(\w*)", line)
-      if (level2_res):
-        cate = " ".join(line.split()[1:])
-        despt = ""
-      elif (level3_res):
-        despt = " ".join(line.split()[1:])
-      elif (tag):
-        tag = tag[0]
-        rule = RuleType(cate, tag, despt, line)
-        log_types.add_rule(rule)
-
+    
 def main():
-  log_types = CatchRules()
-  parse_rules("../rules/example.rules", log_types)
+  log_types = CatchRules("../rules/example.rules")
   # print(log_types)
   return log_types
 
 def test(log_types):
-  for rule in log_types.search_rule(tagname = 'auditconfig'):
+  for rule in log_types.search_rule(tagname = 'sys_exe'):
     print(rule)
 
 if __name__ == "__main__":

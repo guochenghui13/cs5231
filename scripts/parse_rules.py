@@ -16,7 +16,7 @@ class RuleType:
     desp = "Description: " + self.description
     tag = "Tag: " + self.tag
     rule = "Rule: " + self.rule
-    return str.join([cate, desp, tag, rule])
+    return str.join([cate, desp, tag])
 
 class CatchRules:
   # create a CatchRules object containing a map with

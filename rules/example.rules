@@ -171,8 +171,6 @@
 -w /etc/sudoers -p rw -k priv_esc
 -w /etc/sudoers.d -p rw -k priv_esc
 
-
-
 ## Power state
 -w /sbin/shutdown -p x -k power
 -w /sbin/poweroff -p x -k power
@@ -244,11 +242,10 @@
 ## Customized Rules
 
 ### Intercept all file operation
--a always,exit -S open,openat,read,write -F exe=/home/student/Downloads/program11  -k sys_access
+-a always,exit -S open,openat,read,write -F path=/home/student/secret  -k sys_access
 
 ### Intecept execve
 -a always,exit -S execve  -k sys_exe
-
 
 ### Intercept curl
 -a always,exit -S all -F exe=/usr/bin/curl -k sys_curl

@@ -101,8 +101,6 @@ def parse(filename):
                 continue
 
             if syscall == 'openat' or syscall == 'open':
-                name_type = ''
-                name = ''
                 try:
                     paths = data['auditd']['paths']
                     file_path = data['file']['path']
@@ -122,9 +120,6 @@ def parse(filename):
                     else:
                         program_activities[process_executable]= [[log_content]]
             if syscall == 'connect':
-                dest = ''
-                socket = ''
-                result = ''
                 try:
                     dest = data['destination']['path']
                 except KeyError as e:
@@ -149,21 +144,27 @@ def parse(filename):
     od = collections.OrderedDict(sorted(events.items()))
     
     # print by sequence order
-    for idx, e in enumerate(od):
-        print(idx, e, od[e])
-        print('---')
+    print_by_sequential_order(od)
    
     print('\n')  
     print('\n') 
     print('\n') 
     
     # print by program activities
-    # for key, values in program_activities.items():
-    #     print(key, ':')
-    #     for i in values:
-    #         print('\t', i)
+    # print_by_program(program_activities)
     
     output.close()
     f.close()
+
+def print_by_sequential_order(od):
+    for idx, e in enumerate(od):
+        print(idx, e, od[e])
+        print('---')
+
+def print_by_program(program_activities):
+    for key, values in program_activities.items():
+        print(key, ':')
+        for i in values:
+            print('\t', i)
 
 parse("../logs/auditbeat-20221127.ndjson")

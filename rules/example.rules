@@ -250,5 +250,5 @@
 -a always,exit -S execve  -k sys_exe
 
 
-## intercept curl
+### Intercept curl
 -a always,exit -S all -F exe=/usr/bin/curl -k sys_curl

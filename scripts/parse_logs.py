@@ -22,7 +22,7 @@ def parse(filename):
     
     fd_map = {"0": "STDIN_FILENO", "1": "STDOUT_FILENO", "2": "STDERR_FILENO"}
     fd_count = {}
-    
+
     accessed_file = ''
     
     program_activities = {}
@@ -63,14 +63,15 @@ def parse(filename):
                     continue
                 fd_map[exit] = file_path
                 accessed_file = file_path
-                
-            if (accessed_file.startswith("/home/student/secret/") or "program" in process_executable):
+
+            if (accessed_file.startswith("/home/student") or "program" in process_executable):
                 output.write(log)
-                events[seq] = LogItem(rule_type = rule_type, log=(timestamp, syscall, process_executable, accessed_file))
+                log_content = (timestamp, syscall, process_executable, accessed_file)
+                events[seq] = LogItem(rule_type = rule_type, log=log_content)
                 if process_executable in program_activities:
-                    program_activities[process_executable].append([seq, timestamp, syscall, accessed_file])
+                    program_activities[process_executable].append([log_content])
                 else:
-                    program_activities[process_executable]= [[seq, timestamp, syscall, accessed_file]]
+                    program_activities[process_executable]= [[log_content]]
         if tag == 'sys_exe':
             try:
                 syscall = data['auditd']['data']['syscall']
@@ -84,11 +85,40 @@ def parse(filename):
                 except KeyError as e:
                     continue
                 output.write(log)
-                events[seq] = LogItem(rule_type = rule_type, log=(timestamp, syscall, process_executable, process_args))
+                log_content = (timestamp, syscall, process_executable, process_args)
+                events[seq] = LogItem(rule_type = rule_type, log=log_content)
                 if process_executable in program_activities:
-                    program_activities[process_executable].append([seq, timestamp, syscall, process_args])
+                    program_activities[process_executable].append([log_content])
                 else:
-                    program_activities[process_executable] = [[seq, timestamp, syscall, process_args]]
+                    program_activities[process_executable] = [[log_content]]
+        if tag == 'sys_curl' or tag == 'power_abuse':
+            try:
+                syscall = data['auditd']['data']['syscall']
+                process_name = data['process']['name']
+                process_executable = data['process']['executable']
+            except KeyError as e:
+                continue
+            if syscall == 'openat' or syscall == 'open':
+            # CREATE 
+                name_type = ''
+                name = ''
+                try:
+                    paths = data['auditd']['paths']
+                    file_path = data['file']['path']
+                except KeyError as e:
+                    continue
+                if len(paths) > 1:
+                    name_type = paths[1]['nametype']
+                    name = data['auditd']['paths'][1]['name']
+                
+                if name_type == 'CREATE':
+                    output.write(log)
+                    log_content = (timestamp, syscall, process_executable, file_path, name_type, name)
+                    events[seq] = LogItem(rule_type = rule_type, log=log_content)
+                    if process_executable in program_activities:
+                        program_activities[process_executable].append([log_content])
+                    else:
+                        program_activities[process_executable]= [[log_content]]
 
     od = collections.OrderedDict(sorted(events.items()))
     
@@ -102,12 +132,12 @@ def parse(filename):
     print('\n') 
     
     # print by program activities
-    # for key, values in program_activities.items():
-    #     print(key, ':')
-    #     for i in values:
-    #         print('\t', i)
+    for key, values in program_activities.items():
+        print(key, ':')
+        for i in values:
+            print('\t', i)
     
-    # output.close()
-    # f.close()
+    output.close()
+    f.close()
 
-parse("../logs/auditbeat-20221126.ndjson")
+parse("../logs/auditbeat-20221127.ndjson")

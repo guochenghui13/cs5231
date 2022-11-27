@@ -1,6 +1,7 @@
 import json
 import collections
 import sys
+import re
 
 from parse_rules import *
 
@@ -15,7 +16,7 @@ class LogItem:
   def __str__(self) -> str:
     return "rule_type: " + self.rule_type.__str__() + '\n' + 'log: ' + self.log.__str__()
 
-def parse(filename):
+def parse(filename, print_style = ""):
     f = open(filename)
     # save filtered logs to another ndjson file for reference.
     output= open(".."+filename.split('.')[2]+"_filtered.ndjson", "w")
@@ -47,6 +48,7 @@ def parse(filename):
                 syscall = data['auditd']['data']['syscall']
                 process_name = data['process']['name']
                 process_executable = data['process']['executable']
+                pid = data['process']['pid']
             except KeyError as e:
                 continue
             if syscall == 'read' or syscall == 'write' or syscall == 'writev':
@@ -66,17 +68,14 @@ def parse(filename):
 
             if (accessed_file.startswith("/home/student") or "program" in process_executable):
                 output.write(log)
-                log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "accessed_file="+accessed_file)
+                log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "pid="+str(pid), "accessed_file="+accessed_file)
                 events[seq] = LogItem(rule_type = rule_type, log=log_content)
-                if process_executable in program_activities:
-                    program_activities[process_executable].append([log_content])
-                else:
-                    program_activities[process_executable]= [[log_content]]
         if tag == 'sys_exe':
             try:
                 syscall = data['auditd']['data']['syscall']
                 process_name = data['process']['name']
                 process_executable = data['process']['executable']
+                pid = data['process']['pid']
             except KeyError as e:
                 continue
             if syscall == 'execve':
@@ -85,12 +84,8 @@ def parse(filename):
                 except KeyError as e:
                     continue
                 output.write(log)
-                log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "args="+str(process_args))
+                log_content = (timestamp, "syscall="+syscall, "executable="+process_executable,"pid="+str(pid), "args="+str(process_args))
                 events[seq] = LogItem(rule_type = rule_type, log=log_content)
-                if process_executable in program_activities:
-                    program_activities[process_executable].append([log_content])
-                else:
-                    program_activities[process_executable] = [[log_content]]
         
         if tag == 'sys_curl' or tag == 'power_abuse':
             try:
@@ -113,58 +108,65 @@ def parse(filename):
                 
                 if name_type == 'CREATE':
                     output.write(log)
-                    log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "accessed_file="+file_path, "pid="+str(pid), "name_type="+name_type, "name="+name)
+                    log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "pid="+str(pid), "accessed_file="+file_path, "name_type="+name_type, "name="+name)
                     events[seq] = LogItem(rule_type = rule_type, log=log_content)
-                    if process_executable in program_activities:
-                        program_activities[process_executable].append([log_content])
-                    else:
-                        program_activities[process_executable]= [[log_content]]
             if syscall == 'connect':
                 try:
                     dest = data['destination']['path']
-                except KeyError as e:
-                    continue
-                try:
                     socket = data['auditd']['data']['socket']
-                except KeyError as e:
-                    continue
-                try:
                     result = data['auditd']['result']
                 except KeyError as e:
                     continue
                 output.write(log)
                 log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "pid="+str(pid), "destination="+dest, "socket="+str(socket), "result="+result)
                 events[seq] = LogItem(rule_type = rule_type, log=log_content)
-                if process_executable in program_activities:
-                    program_activities[process_executable].append([log_content])
-                else:
-                    program_activities[process_executable]= [[log_content]]
-
 
     od = collections.OrderedDict(sorted(events.items()))
     
-    # print by sequence order
-    print_by_sequential_order(od)
-   
-    print('\n')  
-    print('\n') 
-    print('\n') 
-    
-    # print by program activities
-    # print_by_program(program_activities)
+    if print_style == "normal" or print_style == "":
+        print_events(od)
+    elif print_style == "pid" :
+        pid_dict = group_by_pid(od)
+    elif print_style == "program":   
+        program_activities = group_by_program(od)
     
     output.close()
     f.close()
 
-def print_by_sequential_order(od):
+def print_events(od):
     for idx, e in enumerate(od):
         print(idx, e, od[e])
         print('---')
 
-def print_by_program(program_activities):
+def group_by_program(od):
+    program_activities = {}
+    for idx, e in enumerate(od):
+        process_executable = od[e].log[2].split('=')[1]
+        if process_executable in program_activities:
+            program_activities[process_executable].append([e, od[e].log])
+        else:
+            program_activities[process_executable]= [[e, od[e].log]]
+    
     for key, values in program_activities.items():
         print(key, ':')
         for i in values:
-            print('\t', i)
+            print('\t', "sequence=", i[0], "log=", i[1])
+    return program_activities
 
-parse("../logs/auditbeat-20221127.ndjson")
+def group_by_pid(od):
+    pid_dict = {}
+    for idx, e in enumerate(od):
+        pid=od[e].log[3].split('=')[1]
+        if pid in pid_dict:
+            pid_dict[pid].append([e, od[e]])
+        else:
+            pid_dict[pid] = [[e, od[e]]]
+
+    for key, values in pid_dict.items():
+        print("pid=", key, ':')
+        for i in values:
+            print('\t', "sequence=", i[0], "log=", i[1].log)
+    return pid_dict
+
+
+parse("../logs/auditbeat-20221127.ndjson", "pid")

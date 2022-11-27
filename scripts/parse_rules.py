@@ -19,6 +19,8 @@ class RuleType:
     return str
 
 class CatchRules:
+  # create a CatchRules object containing a map with
+  # category as the key, RuleType objects as the value
   def __init__(self, rule_file = "../rules/example.rules") -> None:
     self.rules = {}
     self.parse_rules(rule_file)
@@ -30,6 +32,7 @@ class CatchRules:
     except:
       self.rules[cate] = [rule_type]
   
+  # return a list of rules maching the tagname
   def search_rule(self, tagname):
     tag_rules = []
     for cate, rules in self.rules.items():
@@ -40,6 +43,8 @@ class CatchRules:
       print("no such tag!", tagname)
     return tag_rules
 
+  # the category starts with ##
+  # the description starts with ###
   def parse_rules(self, rule_file):
     with open(rule_file,'r', encoding='utf-8') as f:
       cate = ""
@@ -68,14 +73,15 @@ class CatchRules:
       for rule in rules:
         rules_str += rule.__str__()
     return rules_str
-    
+
 def main():
   log_types = CatchRules("../rules/example.rules")
   # print(log_types)
   return log_types
 
 def test(log_types):
-  for rule in log_types.search_rule(tagname = 'sys_exe'):
+  rule_type = CatchRules().search_rule("sys_exe")
+  for rule in rule_type:
     print(rule)
 
 if __name__ == "__main__":

@@ -66,7 +66,7 @@ def parse(filename):
 
             if (accessed_file.startswith("/home/student") or "program" in process_executable):
                 output.write(log)
-                log_content = (timestamp, syscall, process_executable, accessed_file)
+                log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "accessed_file="+accessed_file)
                 events[seq] = LogItem(rule_type = rule_type, log=log_content)
                 if process_executable in program_activities:
                     program_activities[process_executable].append([log_content])
@@ -85,21 +85,22 @@ def parse(filename):
                 except KeyError as e:
                     continue
                 output.write(log)
-                log_content = (timestamp, syscall, process_executable, process_args)
+                log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "args="+str(process_args))
                 events[seq] = LogItem(rule_type = rule_type, log=log_content)
                 if process_executable in program_activities:
                     program_activities[process_executable].append([log_content])
                 else:
                     program_activities[process_executable] = [[log_content]]
+        
         if tag == 'sys_curl' or tag == 'power_abuse':
             try:
                 syscall = data['auditd']['data']['syscall']
-                process_name = data['process']['name']
                 process_executable = data['process']['executable']
+                pid = data['process']['pid']
             except KeyError as e:
                 continue
+
             if syscall == 'openat' or syscall == 'open':
-            # CREATE 
                 name_type = ''
                 name = ''
                 try:
@@ -107,18 +108,43 @@ def parse(filename):
                     file_path = data['file']['path']
                 except KeyError as e:
                     continue
+
                 if len(paths) > 1:
                     name_type = paths[1]['nametype']
                     name = data['auditd']['paths'][1]['name']
                 
                 if name_type == 'CREATE':
                     output.write(log)
-                    log_content = (timestamp, syscall, process_executable, file_path, name_type, name)
+                    log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "accessed_file="+file_path, "pid="+str(pid), "name_type="+name_type, "name="+name)
                     events[seq] = LogItem(rule_type = rule_type, log=log_content)
                     if process_executable in program_activities:
                         program_activities[process_executable].append([log_content])
                     else:
                         program_activities[process_executable]= [[log_content]]
+            if syscall == 'connect':
+                dest = ''
+                socket = ''
+                result = ''
+                try:
+                    dest = data['destination']['path']
+                except KeyError as e:
+                    continue
+                try:
+                    socket = data['auditd']['data']['socket']
+                except KeyError as e:
+                    continue
+                try:
+                    result = data['auditd']['result']
+                except KeyError as e:
+                    continue
+                output.write(log)
+                log_content = (timestamp, "syscall="+syscall, "executable="+process_executable, "pid="+str(pid), "destination="+dest, "socket="+str(socket), "result="+result)
+                events[seq] = LogItem(rule_type = rule_type, log=log_content)
+                if process_executable in program_activities:
+                    program_activities[process_executable].append([log_content])
+                else:
+                    program_activities[process_executable]= [[log_content]]
+
 
     od = collections.OrderedDict(sorted(events.items()))
     
@@ -132,10 +158,10 @@ def parse(filename):
     print('\n') 
     
     # print by program activities
-    for key, values in program_activities.items():
-        print(key, ':')
-        for i in values:
-            print('\t', i)
+    # for key, values in program_activities.items():
+    #     print(key, ':')
+    #     for i in values:
+    #         print('\t', i)
     
     output.close()
     f.close()

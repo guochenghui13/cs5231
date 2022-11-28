@@ -270,4 +270,4 @@
 -a always,exit -S bind,accept -k socket_as_server
 
 ### 检查作为客户端连接了那些远程主机
--a always,exit -S connect -k socket_client
+-a always,exit -S connect -k socket_as_client

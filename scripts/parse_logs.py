@@ -53,17 +53,20 @@ def parse(filename, print_style = ""):
             process_name = data['process']['name']
             process_executable = data['process']['executable']
             pid = data['process']['pid']
+            user = data['user']['group']
             log_json = {
                 "timestamp" : timestamp,
                 "syscall" : syscall, 
                 "executable" : process_executable, 
                 "pid" : str(pid), 
+                "user" : user
             }
         except KeyError as e:
             print(e)
             continue
 
         if rule_type.type == 'syscall':
+            
             if tag == 'sys_access':
                 if syscall == 'read' or syscall == 'write' or syscall == 'writev':
                     try:
@@ -81,9 +84,7 @@ def parse(filename, print_style = ""):
                     accessed_file = file_path
 
                 if (accessed_file.startswith("/home/student") or "program" in process_executable):
-                    # output.write(log)
                     log_json["accessed_file"] = accessed_file
-                    # events[seq] = LogItem(rule_type = rule_type, log=json.dumps(log_json))
             
             if tag == 'sys_exe':
                 if syscall == 'execve':
@@ -111,25 +112,63 @@ def parse(filename, print_style = ""):
                         name = data['auditd']['paths'][1]['name']
                     
                     if name_type == 'CREATE':
-                        # output.write(log)
                         log_json["accessed_file"] = file_path
                         log_json["name_type"] = name_type
                         log_json["name"] = name
-                        # events[seq] = LogItem(rule_type = rule_type, log=json.dumps(log_json))
-                if syscall == 'connect':
+               
+            if syscall == 'connect':
+                try:
+                    dest = data['destination']['path']
+                    socket = data['auditd']['data']['socket']
+                    result = data['auditd']['result']
+                except KeyError as e:
+                    continue
+                log_json["destination"] = dest
+                log_json["socket"] = str(socket)
+                log_json["result"] = result
+            
+            if tag == 'socket_as_server':
+                if syscall == 'bind':
                     try:
                         dest = data['destination']['path']
                         socket = data['auditd']['data']['socket']
                         result = data['auditd']['result']
+                        a0 = data['auditd']['data']['a0']
                     except KeyError as e:
                         continue
-                    # output.write(log)
+                    
+                    accessed_file = fd_map.get(a0, "unknown")
+                    
                     log_json["destination"] = dest
                     log_json["socket"] = str(socket)
                     log_json["result"] = result
-                    # events[seq] = LogItem(rule_type = rule_type, log=json.dumps(log_json))
+                    log_json["accessed_file"] = accessed_file
+                
+                elif syscall == 'accept':
+                    try:    
+                        result = data['auditd']['result']
+                        a0 = data['auditd']['data']['a0']
+                    except KeyError as e:
+                        continue
+                    
+                    accessed_file = fd_map.get(a0, "unknown")
+
+                    log_json["result"] = result
+                    log_json["accessed_file"] = accessed_file
+            
+            if tag.startswith("socket_create"):
+                try:    
+                    result = data['auditd']['result']
+                    a0 = data['auditd']['data']['a0']
+                    exit = data['auditd']['data']['exit']
+                except KeyError as e:
+                    continue
+                    
+                accessed_file = fd_map.get(a0, "unknown")
+                log_json["result"] = result
+                log_json["accessed_file"] = accessed_file
+                log_json["exit"] = exit
         else:
-            # events[seq] = LogItem(rule_type = rule_type, log=json.dumps(log_json))
             pass
         log_item = LogItem(rule_type = rule_type, log=json.dumps(log_json))
         events[seq] = log_item

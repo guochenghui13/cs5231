@@ -159,15 +159,13 @@ def parse(filename, print_style = ""):
             if tag.startswith("socket_create"):
                 try:    
                     result = data['auditd']['result']
-                    a0 = data['auditd']['data']['a0']
                     exit = data['auditd']['data']['exit']
                 except KeyError as e:
                     continue
                     
-                accessed_file = fd_map.get(a0, "unknown")
+                accessed_file = fd_map.get(exit, "unknown")
                 log_json["result"] = result
                 log_json["accessed_file"] = accessed_file
-                log_json["exit"] = exit
         else:
             pass
         log_item = LogItem(rule_type = rule_type, log=json.dumps(log_json))

@@ -257,17 +257,17 @@
 -w /usr/sbin/traceroute -p x -k sbin_susp
 -w /usr/sbin/ufw -p x -k sbin_susp
 
-### 服务器及其通用的端口号的一个配置文件
+### internet service daemon
 -w /etc/inetd.conf -p x -k inetd
 
-### 创建了哪些socket，可以看协议族（主要是抓了ipv4和ipv6的tcp和udp链接）
+### Intercept socket create with protocol family
 -a always,exit -S socket -F a0=2 -F a1=1 -k socket_create_IPV4_TCP
 -a always,exit -S socket -F a0=2 -F a1=2  -k socket_create_IPV4_UDP
 -a always,exit -S socket -F a0=10 -F a1=1 -k socket_create_IPV6_TCP
 -a always,exit -S socket -F a0=10 -F a1=2 -k socket_create_IPV6_UDP
 
-### socket_as_server是检测有没有后门端口偷偷连接了，bind的话有些bind的日志会有目标地址和端口，和connect一样有的日志有端口有的日志没端口有点迷
+### Intercept server port connection
 -a always,exit -S bind,accept -k socket_as_server
 
-### 检查作为客户端连接了那些远程主机
+### Intercept client port connection
 -a always,exit -S connect -k socket_as_client

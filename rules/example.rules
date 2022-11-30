@@ -239,7 +239,7 @@
 ## Customized Rules
 
 ### Intercept all file operation
--a always,exit -S open,openat,read,write -F path=/home/student/secret  -k sys_access
+-a always,exit -S open,openat,read,write -k sys_access
 
 ### Intecept execve
 -a always,exit -S execve  -k sys_exe

@@ -4,7 +4,7 @@
 import re
 
 class RuleType:
-  def __init__(self, category, tag = "", description = "", rule = "", type = "syscall") -> None:
+  def __init__(self, category="", tag = "", description = "", rule = "", type = "syscall") -> None:
     self.category = category
     self.description = description
     self.tag = tag
@@ -19,6 +19,14 @@ class RuleType:
     type = "Type: " + self.type
     rule = "Rule: " + self.rule
     return str.join([cate, desp, tag, type])
+
+  def parse_jsons(self, str):
+    cate = re.findall("Category:\s([\w\s]*)\s?\|?",str)[0].strip()
+    desp = re.findall("Description:\s([\w\s]*)\s?\|?",str)[0].strip()
+    tag = re.findall("Tag:\s([\w\s]*)\s?\|?",str)[0].strip()
+    type = re.findall("Type:\s([\w\s]*)\s?\|?",str)[0].strip()
+    ruletype = RuleType(category=cate, tag=tag, description=desp, type=type)
+    return ruletype
 
 class CatchRules:
   # create a CatchRules object containing a map with

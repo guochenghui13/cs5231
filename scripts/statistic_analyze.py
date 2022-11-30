@@ -1,4 +1,5 @@
 from parse_rules import *
+from parse_logs import log_file
 import json
 import pandas as pd
 import sys
@@ -26,7 +27,7 @@ def collect_statistic(parsed_log_file, time_dic, tag_dic, file_dic):
       log = json.loads(obj['log'])
       ## print(ruletype)
       ## print(log)
-      
+
       # collect time info
       timestamp = log['timestamp']
       try:
@@ -53,30 +54,36 @@ def collect_statistic(parsed_log_file, time_dic, tag_dic, file_dic):
 
       line = f.readline()
 
+def print_util():
+  print("Please indicate a statistic graph to see, default: time")
+  print("Available options: time, tag, file")
+
 if __name__ == "__main__":
   if (len(sys.argv) < 2):
-    print("Please indicate a statistic graph to see, default: time")
-    print("Available options: time, tag, file")
+    print_util()
     exit()
   
   collect_statistic(parsed_log_file, time_dic, tag_dic, file_dic)
   mode = sys.argv[1]
+
   if mode == "tag":
     tag_df = pd.DataFrame.from_dict({'tag':tag_dic.keys(),'number':tag_dic.values()})
     print(tag_df)
     fig = px.histogram(tag_df, x="tag", y="number")
-    fig.show()
   elif mode == "file":
     file_df = pd.DataFrame.from_dict({'filename':file_dic.keys(),'number':file_dic.values()})
     print(file_df)
-    fig = px.histogram(file_df, x="filename", y="number")
-    fig.show()   
-  else:
+    fig = px.histogram(file_df, x="filename", y="number") 
+  elif mode == "time":
     time_df = pd.DataFrame.from_dict({'timestamp':time_dic.keys(),'number':time_dic.values()})
     print(time_df)
     fig = px.line(
       time_df, 
       x="timestamp", y="number")
-    fig.show()
+  else:
+    print_util()
+
+  fig.update_layout(autosize=False, width=900)
+  fig.show()
 
 

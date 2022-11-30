@@ -223,5 +223,5 @@ def group_by_pid(od):
             print('\t', "sequence=", i[0], "log=", i[1].log)
     return pid_dict
 
-
-parse("../logs/auditbeat-20221130.ndjson", "program")
+log_file = "../logs/auditbeat-20221130.ndjson"
+parse(log_file, "program")

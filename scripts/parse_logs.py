@@ -20,6 +20,8 @@ def parse(filename, print_style = ""):
     f = open(filename)
     # save filtered logs to another ndjson file for reference.
     output= open(".."+filename.split('.')[2]+"_filtered.json", "w")
+    
+    print(".."+filename.split('.')[2]+"_filtered.json")
 
     # parsed rules from ../rules/example.rules
     rule_types = CatchRules()
@@ -224,4 +226,4 @@ def group_by_pid(od):
     return pid_dict
 
 
-parse("../logs/auditbeat-20221127.ndjson", "program")
+parse("../logs/auditbeat-20221130.ndjson", "program")

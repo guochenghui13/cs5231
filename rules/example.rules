@@ -223,25 +223,6 @@
 #-a always,exit -F arch=b32 -S socket -F a0=10 -k T1011_Exfiltration_Over_Other_Network_Medium
 #-a always,exit -F arch=b64 -S socket -F a0=10 -k T1011_Exfiltration_Over_Other_Network_Medium
 
-
-## Customized Rules
-
-### Intercept all file operation
--a always,exit -S open,openat,read,write -F path=/home/student/secret  -k sys_access
-
-### Intecept execve
--a always,exit -S execve  -k sys_exe
-
-### Intercept curl
--a always,exit -S all -F exe=/usr/bin/curl -k sys_curl
-
-
-
-
-
-
-
-# 防火墙的一些文件
 ## Sbin suspicious activity
 -w /sbin/iptables -p x -k sbin_susp
 -w /sbin/ip6tables -p x -k sbin_susp
@@ -253,6 +234,18 @@
 -w /usr/sbin/tcpdump -p x -k sbin_susp
 -w /usr/sbin/traceroute -p x -k sbin_susp
 -w /usr/sbin/ufw -p x -k sbin_susp
+
+
+## Customized Rules
+
+### Intercept all file operation
+-a always,exit -S open,openat,read,write -F path=/home/student/secret  -k sys_access
+
+### Intecept execve
+-a always,exit -S execve  -k sys_exe
+
+### Intercept curl
+-a always,exit -S all -F exe=/usr/bin/curl -k sys_curl
 
 ### internet service daemon
 -w /etc/inetd.conf -p x -k inetd

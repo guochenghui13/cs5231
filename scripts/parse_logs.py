@@ -226,4 +226,5 @@ def group_by_pid(od):
     return pid_dict
 
 log_file = "../logs/auditbeat-20221131.ndjson"
-parse(log_file, "program")
+if __name__ == "__main__":
+    parse(log_file, "program")

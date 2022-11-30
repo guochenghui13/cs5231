@@ -5,7 +5,7 @@ import pandas as pd
 import sys
 import plotly.express as px
 
-log_file = "../logs/auditbeat-20221127.ndjson"
+# log_file = "../logs/auditbeat-20221127.ndjson"
 parsed_log_file = ".."+log_file.split('.')[2]+"_filtered.json"
 
 time_dic = {}
@@ -70,20 +70,24 @@ if __name__ == "__main__":
     tag_df = pd.DataFrame.from_dict({'tag':tag_dic.keys(),'number':tag_dic.values()})
     print(tag_df)
     fig = px.histogram(tag_df, x="tag", y="number")
+    fig.update_layout(autosize=False, width=900)
+    fig.update_layout(title_text="Number of Tags",title_x=0.5)
   elif mode == "file":
     file_df = pd.DataFrame.from_dict({'filename':file_dic.keys(),'number':file_dic.values()})
     print(file_df)
     fig = px.histogram(file_df, x="filename", y="number") 
+    fig.update_layout(title_text="Number of Filenames",title_x=0.5)
+    fig.update_layout(width=1800)
   elif mode == "time":
     time_df = pd.DataFrame.from_dict({'timestamp':time_dic.keys(),'number':time_dic.values()})
     print(time_df)
     fig = px.line(
       time_df, 
       x="timestamp", y="number")
+    fig.update_layout(title_text="Number of Logs During Time",title_x=0.5)
   else:
     print_util()
 
-  fig.update_layout(autosize=False, width=900)
   fig.show()
 
 

@@ -19,7 +19,6 @@
 -w /usr/sbin/augenrules -p x -k audittools
 
 ## Ignore SELinux AVC records
-### 存疑？？
 -a always,exclude -F msgtype=AVC
 
 ## This prevents chrony from overwhelming the logs
@@ -87,7 +86,7 @@
 -w /var/log/tallylog -p wa -k login
 
 ## Network Environment
-#增加过滤
+# Here we use some customized rules, so comment out the code here.
 ### Changes to hostname
 #-a always,exit -F arch=b32 -S sethostname -S setdomainname -k network_modifications
 #-a always,exit -F arch=b64 -S sethostname -S setdomainname -k network_modifications
@@ -99,8 +98,6 @@
 ### Successful IPv6 Connections
 #-a always,exit -F arch=b64 -S connect -F a2=28 -F success=1 -F key=network_connect_6
 #-a always,exit -F arch=b32 -S connect -F a2=28 -F success=1 -F key=network_connect_6
-
-### 增加bind，listen作为服务器被链接？？
 
 
 ### Changes to other files
@@ -217,7 +214,7 @@
 -a always,exit -F dir=/home -F uid=0 -F auid>=1000 -F auid!=-1 -C auid!=obj_uid -k power_abuse
 
 ## Socket Creations
-# 增加过滤
+# Here we use some customized rules, so comment out the code here.
 ### will catch both IPv4 and IPv6
 
 #-a always,exit -F arch=b32 -S socket -F a0=2  -k T1011_Exfiltration_Over_Other_Network_Medium
@@ -225,6 +222,18 @@
 
 #-a always,exit -F arch=b32 -S socket -F a0=10 -k T1011_Exfiltration_Over_Other_Network_Medium
 #-a always,exit -F arch=b64 -S socket -F a0=10 -k T1011_Exfiltration_Over_Other_Network_Medium
+
+## Sbin suspicious activity
+-w /sbin/iptables -p x -k sbin_susp
+-w /sbin/ip6tables -p x -k sbin_susp
+-w /sbin/ifconfig -p x -k sbin_susp
+-w /usr/sbin/arptables -p x -k sbin_susp
+-w /usr/sbin/ebtables -p x -k sbin_susp
+-w /sbin/xtables-nft-multi -p x -k sbin_susp
+-w /usr/sbin/nft -p x -k sbin_susp
+-w /usr/sbin/tcpdump -p x -k sbin_susp
+-w /usr/sbin/traceroute -p x -k sbin_susp
+-w /usr/sbin/ufw -p x -k sbin_susp
 
 
 ## Customized Rules
@@ -237,25 +246,6 @@
 
 ### Intercept curl
 -a always,exit -S all -F exe=/usr/bin/curl -k sys_curl
-
-
-
-
-
-
-
-# 防火墙的一些文件
-## Sbin suspicious activity
--w /sbin/iptables -p x -k sbin_susp
--w /sbin/ip6tables -p x -k sbin_susp
--w /sbin/ifconfig -p x -k sbin_susp
--w /usr/sbin/arptables -p x -k sbin_susp
--w /usr/sbin/ebtables -p x -k sbin_susp
--w /sbin/xtables-nft-multi -p x -k sbin_susp
--w /usr/sbin/nft -p x -k sbin_susp
--w /usr/sbin/tcpdump -p x -k sbin_susp
--w /usr/sbin/traceroute -p x -k sbin_susp
--w /usr/sbin/ufw -p x -k sbin_susp
 
 ### internet service daemon
 -w /etc/inetd.conf -p x -k inetd

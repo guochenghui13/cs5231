@@ -94,10 +94,12 @@ def parse(filename, print_style = ""):
                         process_args = data['process']['args']
                     except KeyError as e:
                         continue
-                    # output.write(log)
                     log_json["args"] = str(process_args).replace('\\\\', '\\')
-                    # events[seq] = LogItem(rule_type = rule_type, log=json.dumps(log_json))
-            
+
+                    for arg in process_args:
+                        if "/home/student/Downloads/program" in arg and not process_executable == "/usr/bin/rm":
+                            log_json["accessed_file"] = arg
+                    
             if tag == 'sys_curl' or tag == 'power_abuse':
                 if syscall == 'openat' or syscall == 'open':
                     try:

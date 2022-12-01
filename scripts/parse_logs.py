@@ -120,7 +120,7 @@ def parse(filename, print_style = ""):
                
             if syscall == 'connect':
                 try:
-                    dest = data['destination']['path']
+                    dest = data['destination']
                     socket = data['auditd']['data']['socket']
                     result = data['auditd']['result']
                 except KeyError as e:
@@ -226,4 +226,4 @@ def group_by_pid(od):
     return pid_dict
 
 
-parse("../logs/auditbeat-20221131.ndjson", "program")
+parse("../logs/auditbeat-20221132.ndjson", "program")

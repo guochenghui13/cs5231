@@ -94,10 +94,12 @@ def parse(filename, print_style = ""):
                         process_args = data['process']['args']
                     except KeyError as e:
                         continue
-                    # output.write(log)
                     log_json["args"] = str(process_args).replace('\\\\', '\\')
-                    # events[seq] = LogItem(rule_type = rule_type, log=json.dumps(log_json))
-            
+
+                    for arg in process_args:
+                        if "/home/student/Downloads/program" in arg and not process_executable == "/usr/bin/rm":
+                            log_json["accessed_file"] = arg
+                    
             if tag == 'sys_curl' or tag == 'power_abuse':
                 if syscall == 'openat' or syscall == 'open':
                     try:
@@ -117,6 +119,21 @@ def parse(filename, print_style = ""):
                         log_json["accessed_file"] = file_path
                         log_json["name_type"] = name_type
                         log_json["name"] = name
+                
+                if syscall == 'sendto':
+                    try: 
+                        a2 = data['auditd']['data']['exit']
+                    except KeyError as e:
+                        continue
+
+                    log_json["length of sent message"] = a2
+                if syscall == 'recvfrom':
+                    try: 
+                        exit = data['auditd']['data']['exit']
+                    except KeyError as e:
+                        continue
+
+                    log_json["length of received message"] = exit
                
             if syscall == 'connect':
                 try:
@@ -225,5 +242,8 @@ def group_by_pid(od):
             print('\t', "sequence=", i[0], "log=", i[1].log)
     return pid_dict
 
+log_file = "../logs/auditbeat-20221131.ndjson"
+if __name__ == "__main__":
+    parse(log_file, "program")
 
 parse("../logs/auditbeat-20221132.ndjson", "program")

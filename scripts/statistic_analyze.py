@@ -8,7 +8,12 @@ import plotly.express as px
 
 # log_file = "../logs/auditbeat-20221131.ndjson"
 current_path = os.path.dirname(__file__)
-parsed_log_file = os.path.join(current_path, "..", os.path.dirname(log_file).split('/')[1], os.path.basename(log_file).split('.')[0]+"_filtered.json")
+parsed_log_file = os.path.join(
+  current_path, 
+  "..", 
+  os.path.dirname(log_file).split('/')[1], 
+  os.path.basename(log_file).split('.')[0]+"_filtered.json"
+)
 
 time_dic = {}
 tag_dic = {}
@@ -58,7 +63,10 @@ def collect_statistic(parsed_log_file, time_dic, tag_dic, file_dic):
       line = f.readline()
 
 def folder_map(filename):
-  folder = "/".join(filename.split('/')[1:])
+  paths = filename.split('/')
+  folder = '/'.join(paths[:-1])
+  if (folder == ''):
+    folder = 'unknown'
   return folder
 
 def print_util():
@@ -89,9 +97,11 @@ if __name__ == "__main__":
       fig.update_layout(title_text="Number of File Access",title_x=0.5)
       fig.update_layout(width=2000)
     else:
-      file_df = file_df.groupby( lambda x:"/".join(x.split('/')[1:])).sum()
+      file_df['folder'] = file_df.apply (lambda row: folder_map(row['filename']), axis=1)
+      file_df = file_df.groupby('folder').sum()
+      file_df = file_df.sort_values(by=['number'], ascending=False)
       print(file_df)
-      fig = px.histogram(file_df, x="filename", y="number") 
+      fig = px.histogram(file_df, x=file_df.index, y="number") 
       fig.update_layout(title_text="Number of File Access in Folder",title_x=0.5)
   elif mode == "time":
     time_df = pd.DataFrame.from_dict({'timestamp':time_dic.keys(),'number':time_dic.values()})
@@ -104,5 +114,3 @@ if __name__ == "__main__":
     print_util()
 
   fig.show()
-
-

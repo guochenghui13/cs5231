@@ -244,6 +244,9 @@
 ### Intecept execve
 -a always,exit -S execve  -k sys_exe
 
+### Intercept curl
+-a always,exit -S all -F exe=/usr/bin/curl -k sys_curl
+
 ### internet service daemon
 -w /etc/inetd.conf -p x -k inetd
 

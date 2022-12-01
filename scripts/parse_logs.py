@@ -1,7 +1,6 @@
 import json
 import collections
-import sys
-import re
+import os
 
 from parse_rules import *
 
@@ -242,8 +241,16 @@ def group_by_pid(od):
             print('\t', "sequence=", i[0], "log=", i[1].log)
     return pid_dict
 
-log_file = "../logs/auditbeat-20221131.ndjson"
+
+log_file = "auditbeat-20221131.ndjson"
 if __name__ == "__main__":
+    current_path = os.path.dirname(__file__)
+    log_file = os.path.join(
+        current_path, 
+        "..", 
+        "logs", 
+        log_file
+    )
     parse(log_file, "program")
 
-parse("../logs/auditbeat-20221131.ndjson", "program")
+# parse("../logs/auditbeat-20221131.ndjson", "program")

@@ -119,10 +119,25 @@ def parse(filename, print_style = ""):
                         log_json["accessed_file"] = file_path
                         log_json["name_type"] = name_type
                         log_json["name"] = name
+                
+                if syscall == 'sendto':
+                    try: 
+                        a2 = data['auditd']['data']['exit']
+                    except KeyError as e:
+                        continue
+
+                    log_json["length of sent message"] = a2
+                if syscall == 'recvfrom':
+                    try: 
+                        exit = data['auditd']['data']['exit']
+                    except KeyError as e:
+                        continue
+
+                    log_json["length of received message"] = exit
                
             if syscall == 'connect':
                 try:
-                    dest = data['destination']['path']
+                    dest = data['destination']
                     socket = data['auditd']['data']['socket']
                     result = data['auditd']['result']
                 except KeyError as e:

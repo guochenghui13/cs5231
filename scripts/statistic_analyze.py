@@ -71,7 +71,7 @@ def folder_map(filename):
 
 def print_util():
   print("Please indicate a statistic graph to see, default: time")
-  print("Available options: time, tag, file")
+  print("Available options: time, tag, file, folder")
 
 if __name__ == "__main__":
   if (len(sys.argv) < 2):
@@ -88,6 +88,7 @@ if __name__ == "__main__":
     fig = px.histogram(tag_df, x="tag", y="number")
     fig.update_layout(autosize=False, width=1000)
     fig.update_layout(title_text="Number of Tags",title_x=0.5)
+  
   elif mode == "file" or mode == "folder":
     file_df = pd.DataFrame.from_dict({'filename':file_dic.keys(),'number':file_dic.values()})
     if mode == "file":
@@ -103,6 +104,7 @@ if __name__ == "__main__":
       print(file_df)
       fig = px.histogram(file_df, x=file_df.index, y="number") 
       fig.update_layout(title_text="Number of File Access in Folder",title_x=0.5)
+  
   elif mode == "time":
     time_df = pd.DataFrame.from_dict({'timestamp':time_dic.keys(),'number':time_dic.values()})
     print(time_df)

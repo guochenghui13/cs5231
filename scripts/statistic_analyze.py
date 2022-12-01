@@ -11,7 +11,7 @@ current_path = os.path.dirname(__file__)
 parsed_log_file = os.path.join(
   current_path, 
   "..", 
-  os.path.dirname(log_file).split('/')[1], 
+  "logs", 
   os.path.basename(log_file).split('.')[0]+"_filtered.json"
 )
 
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     tag_df = tag_df.sort_values(by=['number'], ascending=False)
     print(tag_df)
     fig = px.histogram(tag_df, x="tag", y="number")
-    fig.update_layout(autosize=False, width=1000)
+    fig.update_layout(width=1200, height=700, bargap=0.5, font={'size':16})
     fig.update_layout(title_text="Number of Tags",title_x=0.5)
   
   elif mode == "file" or mode == "folder":
@@ -103,7 +103,8 @@ if __name__ == "__main__":
       file_df = file_df.sort_values(by=['number'], ascending=False)
       print(file_df)
       fig = px.histogram(file_df, x=file_df.index, y="number") 
-      fig.update_layout(title_text="Number of File Access in Folder",title_x=0.5)
+      fig.update_layout(width=1200, height=700, bargap=0.5, font={'size':16})
+      fig.update_layout(title_text="Number of File Access Group by Folder",title_x=0.5)
   
   elif mode == "time":
     time_df = pd.DataFrame.from_dict({'timestamp':time_dic.keys(),'number':time_dic.values()})
@@ -111,7 +112,7 @@ if __name__ == "__main__":
     fig = px.line(
       time_df, 
       x="timestamp", y="number")
-    fig.update_layout(title_text="Number of Logs During Time",title_x=0.5)
+    fig.update_layout(title_text="Number of Logs Over Time",title_x=0.5, font={'size':16})
   else:
     print_util()
 

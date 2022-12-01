@@ -246,4 +246,4 @@ log_file = "../logs/auditbeat-20221131.ndjson"
 if __name__ == "__main__":
     parse(log_file, "program")
 
-parse("../logs/auditbeat-20221132.ndjson", "program")
+parse("../logs/auditbeat-20221131.ndjson", "program")

@@ -1,4 +1,5 @@
 # CS5231 Project
+Github Repository: https://github.com/guochenghui13/cs5231
 
 Report: https://docs.google.com/document/d/1RCVW8h8sap3ajMwjnxk9oWaBpcN0Bib0IeMa5mb5kyI/edit#
 
